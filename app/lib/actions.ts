@@ -1,9 +1,12 @@
 'use server';
 
 import { z } from 'zod';
+import { signIn } from '@/auth';
 import postgres from 'postgres';
+import { AuthError } from 'next-auth';
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
+
 
 export type State = {
     errors?: {
@@ -29,6 +32,25 @@ const FormSchema = z.object({
     }),
     date: z.string(),
 });
+
+export async function authenticate(
+    prevState: string | undefined,
+    formData: FormData,
+) {
+    try {
+        await signIn('credentials', formData);
+    } catch (error) {
+        if (error instanceof AuthError) {
+            switch (error.type) {
+                case 'CredentialsSignin':
+                    return 'Invalid credentials.';
+                default:
+                    return 'Something went wrong.';
+            }
+        }
+        throw error;
+    }
+}
 
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
