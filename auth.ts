@@ -1,3 +1,4 @@
+
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { authConfig } from './auth.config';
@@ -5,6 +6,8 @@ import { z } from 'zod';
 import type { User } from '@/app/lib/definitions';
 import bcrypt from 'bcrypt';
 import postgres from 'postgres';
+import type { NextAuthConfig } from 'next-auth';
+import type { NextRequest } from 'next/server';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -18,7 +21,7 @@ async function getUser(email: string): Promise<User | undefined> {
     }
 }
 
-export const { auth, signIn, signOut } = NextAuth({
+const config: NextAuthConfig = {
     ...authConfig,
     providers: [
         Credentials({
@@ -42,4 +45,7 @@ export const { auth, signIn, signOut } = NextAuth({
             },
         }),
     ],
-});
+};
+
+const nextAuthResult = NextAuth(config);
+export const { handlers, auth, signIn, signOut } = nextAuthResult;
